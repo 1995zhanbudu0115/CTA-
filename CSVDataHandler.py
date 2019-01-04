@@ -1,5 +1,5 @@
-from qsObject import DataHandler
-from qsEvent import MarketEvent
+from BsObject import DataHandler
+from BsEvent import MarketEvent
 import os
 import pandas as pd
 import time
@@ -11,11 +11,11 @@ class CSVDataHandler(DataHandler):
     CSVDataHandler
     """
 
-    def __init__(self, event_queue, file_dir, replay_speed=1):
+    def __init__(self, event_queue, symbol, frequency, replay_speed=0):
         """
         DataHandler初始化
         """
-        self._parse_csv_files(file_dir)
+        self._import_history_data(symbol, frequency)
         self.continue_backtest = True
         self.__cursor = 0
         self.event_queue = event_queue     # 事件队列
@@ -35,7 +35,6 @@ class CSVDataHandler(DataHandler):
     def run(self):
         self.run_thread = threading.Thread(target=self.__run)
         self.run_thread.start()
-        
 
     def get_prev_bars(self, n=1, columns=None):
         """
@@ -60,16 +59,28 @@ class CSVDataHandler(DataHandler):
             columns = self.__data.columns.values
         return self.__data.loc[self.__cursor, columns]
 
-    def _parse_csv_files(self, file_dir):
+    def _import_history_data(self, symbol, frequency):
         """
-        parse csv files, save to self.__data
-
-        :param file_dir:  ./data/IF.csv
+        获取本地历史行情数据，时长为bitfinex， 主要区间为2017年， 频率为1T, 5T, 15T, 30T, 1H
+        :param symbol: str 标的名称,大写 eg: BTCUSD
+        :param period: str 频率 eg: 1T means 1min
         :return:
         """
-        # file_dir = '../data/IF.csv'
-        df = pd.read_csv(file_dir)
-        df[['trading_day', 'trading_time']] = df['DATETIME'].str.split('\s', expand=True)
-        df['symbol'] = os.path.basename(file_dir).strip('.csv')
-        df.reset_index(inplace=True, drop=True)
-        self.__data = df
+        t_da = pd.DataFrame()
+        days = os.listdir('D:\my_files_du\my_project\py\geekthings\coin_data\Data')
+        for d in days:
+            num = d.split('-')[0] + d.split('-')[1] + d.split('-')[2]
+            da = pd.read_csv(
+                'D:\my_files_du\my_project\py\geekthings\coin_data\Data\\{0}\\{1}\\BITFINEX_{2}_{3}_{4}.csv'
+                .format(d, symbol, symbol, num, frequency), header=1, names=['gmt_create', 'open', 'high', 'low',
+                                                                             'close', 'vol'])
+            t_da = t_da.append(da)
+        t_da.reset_index(inplace=True, drop=True)
+        self.__data = t_da
+
+
+if __name__ == '__main__':
+    from queue import Queue
+    event_q = Queue()
+    M = CSVDataHandler(event_q, symbol='BTCUSD', frequency='1h')
+    M.run()

@@ -6,17 +6,17 @@
 import queue
 import time
 
-from CSVDataHandler import CSVDataHandler
-from RandomStrategy import RandomStrategy
+from MysqlDataHandler import MysqlDataHandler
+from StrategyBase import StrategyBase
 from NaivePortfolio import NaivePortfolio
 from BarBacktestExecutor import BarBacktestExector
 
 
 event_queue = queue.Queue()   # 事件队列
 
-data_handler = CSVDataHandler(event_queue, 'data/IF.csv')  # 数据引擎
+data_handler = MysqlDataHandler(event_queue, symbol='BTCUSDT', market='Binance', start_date='2018-07-11')  # 数据引擎
 
-strategy = RandomStrategy(event_queue, data_handler)       # 策略实例。实际应用中应该有多个策略实例
+strategy = StrategyBase(event_queue, data_handler)       # 策略实例。实际应用中应该有多个策略实例
 portfolio = NaivePortfolio(event_queue, data_handler)      # 组合
 executor = BarBacktestExector(event_queue, data_handler)   # 回测模拟成交器；如果是实盘这里就是算法交易模块
 

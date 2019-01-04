@@ -1,5 +1,5 @@
-from qsObject import Portfolio
-from qsEvent import OrderEvent, SignalEvent
+from BsObject import Portfolio
+from BsEvent import OrderEvent, SignalEvent
 import datetime
 
 
@@ -28,7 +28,7 @@ class NaivePortfolio(Portfolio):
                 order_type='MKT',
                 direction=event.signal_direction,
                 quantity=1,
-                price=0.0,
+                price=dict(self.data_handler.get_current_bar())['close'],
             )
             # 放入事件队列
             self.event_queue.put(order)
